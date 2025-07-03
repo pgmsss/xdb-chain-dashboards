@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>XDB Chain Order Book</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+  
+  body { 
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background-color: #f8f9fa;
+    color: #333;
+  }
+  
+  .main-title {
+    text-align: center;
+    padding: 40px 20px;
+    background: white;
+    margin-bottom: 30px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  }
+  
+  .main-title h1 {
+    font-size: 32px;
+    font-weight: 700;
+    color: #2563eb;
+    margin-bottom: 10px;
+    letter-spacing: 1px;
+  }
+  
+  .main-title .subtitle {
+    font-size: 16px;
+    color: #6b7280;
+    font-weight: 500;
+  }
+  
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px 30px;
+  }
+  
+  .status-card {
+    background: white;
+    border-radius: 12px;
+    padding: 25px;
+    margin-bottom: 30px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    border: 1px solid #e5e7eb;
+  }
+  
+  .status-header {
+    text-align: center;
+    margin-bottom: 20px;
+  }
+  
+  .status-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 10px;
+  }
+  
+  .status-icon {
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    border-radius: 50%;
+    margin: 0 auto 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 24px;
+  }
+  
+  .status-text {
+    font-size: 16px;
+    font-weight: 600;
+    color: #059669;
+    margin-bottom: 5px;
+  }
+  
+  .update-info {
+    text-align: center;
+    color: #6b7280;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+  
+  .order-book-section {
+    background: white;
+    border-radius: 12px;
+    padding: 25px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    border: 1px solid #e5e7eb;
+  }
+  
+  .section-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 20px;
+    text-align: center;
+  }
+  
+  .tables-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+  }
+  
+  .table-section h3 {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 15px;
+    text-align: center;
+    padding: 10px;
+    border-radius: 8px;
+  }
+  
+  .bids-section h3 {
+    background: #dcfce7;
+    color: #166534;
+  }
+  
+  .asks-section h3 {
+    background: #fef2f2;
+    color: #991b1b;
+  }
+  
+  table { 
+    width: 100%; 
+    border-collapse: collapse;
+    font-size: 14px;
+  }
+  
+  th {
+    background: #f9fafb;
+    color: #374151;
+    font-weight: 600;
+    padding: 12px 8px;
+    text-align: left;
+    border-bottom: 2px solid #e5e7eb;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  
+  td { 
+    padding: 12px 8px;
+    border-bottom: 1px solid #f3f4f6;
+    font-family: 'Monaco', 'Menlo', monospace;
+    font-size: 12px;
+  }
+  
+  .bids-table td {
+    color: #059669;
+  }
+  
+  .asks-table td {
+    color: #dc2626;
+  }
+  
+  .accumulated-column {
+    background: rgba(0,0,0,0.02);
+    font-weight: 600;
+  }
+  
+  tr:hover td {
+    background: #f9fafb;
+  }
+  
+  .loading {
+    text-align: center;
+    color: #6b7280;
+    font-style: italic;
+    padding: 20px;
+  }
+  
+  @media (max-width: 768px) {
+    .main-title h1 {
+      font-size: 24px;
+    }
+    
+    .tables-container {
+      grid-template-columns: 1fr;
+      gap: 20px;
+    }
+    
+    .container {
+      padding: 0 15px 20px;
+    }
+    
+    th, td {
+      padding: 8px 4px;
+      font-size: 11px;
+    }
+  }
+  
+  .pulse {
+    animation: pulse 2s infinite;
+  }
+  
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+  }
+</style>
+</head>
+<body>
+
+<div class="main-title">
+  <h1>XDB CHAIN Order Book</h1>
+  <div class="subtitle">Real-time CBPAY/XDB Trading Data</div>
+</div>
+
+<div class="container">
+  <div class="status-card">
+    <div class="status-header">
+      <h2 class="status-title">Order Book Status</h2>
+      <div class="status-icon pulse">📊</div>
+      <div class="status-text">Up and running!</div>
+    </div>
+    <div class="update-info">
+      Última atualização: <span id="lastUpdate">Carregando...</span><br>
+      Próxima atualização em: <span id="countdown">30</span> segundos<br>
+      Par de negociação: <strong>CBPAY/XDB</strong>
+    </div>
+  </div>
+
+  <div class="order-book-section">
+    <h2 class="section-title">Order Book para CBPAY/XDB</h2>
+    
+    <div class="tables-container">
+      <div class="table-section bids-section">
+        <h3>Bids (Compras)</h3>
+        <table class="bids-table">
+          <thead>
+            <tr>
+              <th>Preço</th>
+              <th>Quantidade</th>
+              <th>Acumulado</th>
+            </tr>
+          </thead>
+          <tbody id="bidsTable">
+            <tr><td colspan="3" class="loading">Carregando...</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="table-section asks-section">
+        <h3>Asks (Vendas)</h3>
+        <table class="asks-table">
+          <thead>
+            <tr>
+              <th>Preço</th>
+              <th>Quantidade</th>
+              <th>Acumulado</th>
+            </tr>
+          </thead>
+          <tbody id="asksTable">
+            <tr><td colspan="3" class="loading">Carregando...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let countdownTimer = 30;
+let countdownInterval;
+
+async function fetchOrderBook() {
+  try {
+    const response = await fetch('https://horizon.livenet.xdbchain.com/order_book?selling_asset_code=CBPAY&selling_asset_type=credit_alphanum12&buying_asset_type=native&buying_asset_code=native&selling_asset_issuer=GD7PT6VAXH227WBYR5KN3OYKGSNXVETMYZUP3R62DFX3BBC7GGOBDFJ2');
+    const data = await response.json();
+    
+    updateTables(data);
+    updateLastUpdateTime();
+    
+  } catch (error) {
+    console.error('Erro ao buscar dados:', error);
+    document.getElementById('bidsTable').innerHTML = '<tr><td colspan="3" class="loading" style="color: #dc2626;">Erro ao carregar dados</td></tr>';
+    document.getElementById('asksTable').innerHTML = '<tr><td colspan="3" class="loading" style="color: #dc2626;">Erro ao carregar dados</td></tr>';
+  }
+}
+
+function updateTables(data) {
+  // Atualizar tabela de bids
+  const bidsTable = document.getElementById('bidsTable');
+  bidsTable.innerHTML = '';
+  
+  let bidsAccumulated = 0;
+  data.bids.forEach(bid => {
+    const row = bidsTable.insertRow();
+    const amount = parseFloat(bid.amount);
+    bidsAccumulated += amount;
+    
+    row.insertCell(0).textContent = parseFloat(bid.price).toFixed(7);
+    row.insertCell(1).textContent = amount.toFixed(7);
+    const accCell = row.insertCell(2);
+    accCell.textContent = bidsAccumulated.toFixed(7);
+    accCell.className = 'accumulated-column';
+  });
+  
+  // Atualizar tabela de asks
+  const asksTable = document.getElementById('asksTable');
+  asksTable.innerHTML = '';
+  
+  let asksAccumulated = 0;
+  data.asks.forEach(ask => {
+    const row = asksTable.insertRow();
+    const amount = parseFloat(ask.amount);
+    asksAccumulated += amount;
+    
+    row.insertCell(0).textContent = parseFloat(ask.price).toFixed(7);
+    row.insertCell(1).textContent = amount.toFixed(7);
+    const accCell = row.insertCell(2);
+    accCell.textContent = asksAccumulated.toFixed(7);
+    accCell.className = 'accumulated-column';
+  });
+}
+
+function updateLastUpdateTime() {
+  const now = new Date();
+  document.getElementById('lastUpdate').textContent = now.toLocaleString('pt-PT');
+}
+
+function startCountdown() {
+  countdownInterval = setInterval(() => {
+    countdownTimer--;
+    document.getElementById('countdown').textContent = countdownTimer;
+    
+    if (countdownTimer <= 0) {
+      countdownTimer = 30;
+      fetchOrderBook();
+    }
+  }, 1000);
+}
+
+// Carregar dados inicialmente
+fetchOrderBook();
+
+// Iniciar contagem regressiva
+startCountdown();
+
+// Atualizar a cada 30 segundos
+setInterval(() => {
+  fetchOrderBook();
+  countdownTimer = 30;
+}, 30000);
+</script>
+
+</body>
+</html>
+
