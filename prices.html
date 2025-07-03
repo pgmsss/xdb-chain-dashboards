@@ -1,0 +1,654 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>XDB Chain Dashboards</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #f0f8ff 0%, #e6f3ff 100%);
+            color: #1e3a8a;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(59, 130, 246, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.1);
+        }
+
+        .header h1 {
+            color: #1e40af;
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #1e40af, #3b82f6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header p {
+            color: #64748b;
+            font-size: 1.1rem;
+            margin-bottom: 20px;
+        }
+
+        .status-card {
+            background: linear-gradient(135deg, #3b82f6, #1e40af);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            display: inline-block;
+            margin: 10px;
+            box-shadow: 0 4px 20px rgba(59, 130, 246, 0.3);
+        }
+
+        .status-card .status-icon {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+
+        .rate-info {
+            background: linear-gradient(135deg, #fef3c7, #fde68a);
+            border: 2px solid #f59e0b;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: center;
+            color: #92400e;
+            font-weight: 600;
+        }
+
+        .order-book-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-top: 30px;
+        }
+
+        .order-section {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 8px 32px rgba(59, 130, 246, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.1);
+        }
+
+        .order-section h3 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 3px solid;
+            text-align: center;
+        }
+
+        .bids h3 {
+            color: #059669;
+            border-bottom-color: #059669;
+        }
+
+        .asks h3 {
+            color: #dc2626;
+            border-bottom-color: #dc2626;
+        }
+
+        .order-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        .order-table th {
+            background: linear-gradient(135deg, #f8fafc, #e2e8f0);
+            color: #475569;
+            font-weight: 600;
+            padding: 12px 8px;
+            text-align: right;
+            border-bottom: 2px solid #e2e8f0;
+            font-size: 0.9rem;
+        }
+
+        .order-table td {
+            padding: 10px 8px;
+            text-align: right;
+            border-bottom: 1px solid #f1f5f9;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+        }
+
+        .order-table tr:hover {
+            background-color: #f8fafc;
+        }
+
+        .bids .order-table tr:hover {
+            background-color: #f0fdf4;
+        }
+
+        .asks .order-table tr:hover {
+            background-color: #fef2f2;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #64748b;
+            font-size: 1.1rem;
+        }
+
+        .error {
+            background: #fef2f2;
+            border: 2px solid #fca5a5;
+            color: #dc2626;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .last-updated {
+            text-align: center;
+            color: #64748b;
+            font-size: 0.9rem;
+            margin-top: 20px;
+            padding: 15px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 16px rgba(59, 130, 246, 0.1);
+        }
+
+        .summary-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 4px 16px rgba(59, 130, 246, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.1);
+        }
+
+        .stat-card .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #1e40af;
+            margin-bottom: 5px;
+        }
+
+        .stat-card .stat-label {
+            color: #64748b;
+            font-size: 0.9rem;
+        }
+
+        .pair-selector {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .pair-selector button {
+            background-color: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 0 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background-color 0.3s ease;
+        }
+
+        .pair-selector button:hover {
+            background-color: #1e40af;
+        }
+
+        .pair-selector button.active {
+            background-color: #1e40af;
+            box-shadow: 0 4px 15px rgba(30, 64, 175, 0.4);
+        }
+
+        @media (max-width: 768px) {
+            .order-book-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .order-table th,
+            .order-table td {
+                padding: 8px 4px;
+                font-size: 0.8rem;
+            }
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 id="mainTitle">Order Book</h1>
+            <p id="subTitle">CBPAY/XDB Trading Data with USDT Values</p>
+            
+            <div class="pair-selector">
+                <button id="xdbCBPAYBtn" class="active">CBPAY/XDB</button>
+                <button id="honeyXDBBtn">HONEY/XDB</button>
+            </div>
+
+            <div class="status-card">
+                <div class="status-icon">📊</div>
+                <strong>Live & Running!</strong><br>
+                <span id="lastUpdate">Loading...</span><br>
+                <strong id="currentTradingPair">CBPAY/XDB</strong>
+            </div>
+        </div>
+
+        <div class="rate-info">
+            <strong>XDB/USDT Exchange Rate:</strong> <span id="xdbRate">Loading...</span> USDT per XDB<br>
+            <small id="sourceText">Source: CoinGecko API</small>
+        </div>
+
+        <div class="summary-stats">
+            <div class="stat-card">
+                <div class="stat-value" id="totalBids">-</div>
+                <div class="stat-label">Total Bids</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="totalAsks">-</div>
+                <div class="stat-label">Total Asks</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="totalVolumeUSDT">-</div>
+                <div class="stat-label">Total Volume (USDT)</div>
+            </div>
+        </div>
+
+        <div id="errorMessage" class="error" style="display: none;"></div>
+        
+        <div class="order-book-container">
+            <div class="order-section bids">
+                <h3>Bids (Buy Orders)</h3>
+                <div id="bidsLoading" class="loading pulse">Loading bids...</div>
+                <table class="order-table" id="bidsTable" style="display: none;">
+                    <thead>
+                        <tr>
+                            <th>Price (XDB)</th>
+                            <th id="bidAmountHeader">Amount (CBPAY)</th>
+                            <th id="bidTotalHeader">Total (CBPAY)</th>
+                            <th>Value (USDT)</th>
+                            <th>Accumulated USDT</th>
+                        </tr>
+                    </thead>
+                    <tbody id="bidsBody">
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="order-section asks">
+                <h3>Asks (Sell Orders)</h3>
+                <div id="asksLoading" class="loading pulse">Loading asks...</div>
+                <table class="order-table" id="asksTable" style="display: none;">
+                    <thead>
+                        <tr>
+                            <th>Price (XDB)</th>
+                            <th id="askAmountHeader">Amount (CBPAY)</th>
+                            <th id="askTotalHeader">Total (CBPAY)</th>
+                            <th>Value (USDT)</th>
+                            <th>Accumulated USDT</th>
+                        </tr>
+                    </thead>
+                    <tbody id="asksBody">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="last-updated">
+            <strong>Last Updated:</strong> <span id="timestamp">-</span> | 
+            <strong>Next Price Update:</strong> <span id="nextPriceUpdateCountdown">5 minutes</span> | 
+            <strong>Next Order Book Update:</strong> <span id="nextOrderBookUpdateCountdown">10 seconds</span>
+        </div>
+    </div>
+
+    <script>
+        const COINMARKETCAP_API_KEY = "db7ad51a-325c-4047-8799-005c2664b776";
+        const COINGECKO_API_KEY = "CG-8CoKVLYmm4crygn9DeHvFUAk";
+
+        const PAIRS = {
+            'CBPAY/XDB': {
+                mainTitle: 'Order Book',
+                subTitle: 'CBPAY/XDB Trading Data with USDT Values',
+                tradingPair: 'CBPAY/XDB',
+                orderBookApiUrl: 'https://horizon.livenet.xdbchain.com/order_book?selling_asset_code=CBPAY&selling_asset_type=credit_alphanum12&buying_asset_type=native&buying_asset_code=native&selling_asset_issuer=GD7PT6VAXH227WBYR5KN3OYKGSNXVETMYZUP3R62DFX3BBC7GGOBDFJ2',
+                amountLabel: 'CBPAY'
+            },
+            'HONEY/XDB': {
+                mainTitle: 'Order Book',
+                subTitle: 'HONEY/XDB Trading Data with USDT Values',
+                tradingPair: 'HONEY/XDB',
+                orderBookApiUrl: 'https://horizon.livenet.xdbchain.com/order_book?selling_asset_code=HONEY&selling_asset_type=credit_alphanum12&buying_asset_type=native&buying_asset_code=native&selling_asset_issuer=GAZ5BEQZI67UEJAUEFT7IQHU7A4FXWJDULHLMICLHQ5RF3KLWIRMFZQP',
+                amountLabel: 'HONEY'
+            }
+        };
+
+        let currentPair = 'CBPAY/XDB'; // Default pair
+        let XDB_USDT_RATE = 0; 
+        
+        let priceUpdateInterval;
+        let orderBookUpdateInterval;
+        let priceCountdownInterval;
+        let orderBookCountdownInterval;
+
+        let nextPriceUpdateTime = 300; // 5 minutes in seconds
+        let nextOrderBookUpdateTime = 10; // 10 seconds
+
+        function formatNumber(num, decimals = 7) {
+            return parseFloat(num).toFixed(decimals);
+        }
+
+        function formatCurrency(num, decimals = 2) {
+            return parseFloat(num).toFixed(decimals);
+        }
+
+        function calculateUSDTValue(priceXDB, amountAsset) {
+            return priceXDB * amountAsset * XDB_USDT_RATE;
+        }
+
+        function updateTimestamp() {
+            const now = new Date();
+            document.getElementById('timestamp').textContent = now.toLocaleString();
+            document.getElementById('lastUpdate').textContent = `Last updated: ${now.toLocaleTimeString()}`;
+        }
+
+        function startPriceCountdown() {
+            nextPriceUpdateTime = 300; // Reset to 5 minutes
+            clearInterval(priceCountdownInterval); 
+            priceCountdownInterval = setInterval(() => {
+                nextPriceUpdateTime--;
+                const minutes = Math.floor(nextPriceUpdateTime / 60);
+                const seconds = nextPriceUpdateTime % 60;
+                document.getElementById('nextPriceUpdateCountdown').textContent = `${minutes} minutes ${seconds} seconds`;
+                if (nextPriceUpdateTime <= 0) {
+                    clearInterval(priceCountdownInterval);
+                }
+            }, 1000);
+        }
+
+        function startOrderBookCountdown() {
+            nextOrderBookUpdateTime = 10; // Reset to 10 seconds
+            clearInterval(orderBookCountdownInterval); 
+            orderBookCountdownInterval = setInterval(() => {
+                nextOrderBookUpdateTime--;
+                document.getElementById('nextOrderBookUpdateCountdown').textContent = `${nextOrderBookUpdateTime} seconds`;
+                if (nextOrderBookUpdateTime <= 0) {
+                    clearInterval(orderBookCountdownInterval);
+                }
+            }, 1000);
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            errorDiv.textContent = `Error: ${message}`;
+            errorDiv.style.display = 'block';
+        }
+
+        function hideError() {
+            document.getElementById('errorMessage').style.display = 'none';
+        }
+
+        function updateSummaryStats(bids, asks) {
+            document.getElementById('totalBids').textContent = bids.length;
+            document.getElementById('totalAsks').textContent = asks.length;
+            
+            let totalVolumeUSDT = 0;
+            bids.forEach(bid => {
+                totalVolumeUSDT += calculateUSDTValue(parseFloat(bid.price), parseFloat(bid.amount));
+            });
+            asks.forEach(ask => {
+                totalVolumeUSDT += calculateUSDTValue(parseFloat(ask.price), parseFloat(ask.amount));
+            });
+            
+            document.getElementById('totalVolumeUSDT').textContent = `$${formatCurrency(totalVolumeUSDT)}`;
+        }
+
+        function renderOrderBook(data) {
+            hideError();
+            
+            const bidsBody = document.getElementById('bidsBody');
+            const asksBody = document.getElementById('asksBody');
+            
+            bidsBody.innerHTML = '';
+            asksBody.innerHTML = '';
+            
+            let cumulativeBids = 0;
+            let cumulativeUSDTBids = 0;
+            data.bids.forEach(bid => {
+                cumulativeBids += parseFloat(bid.amount);
+                const usdtValue = calculateUSDTValue(parseFloat(bid.price), parseFloat(bid.amount));
+                cumulativeUSDTBids += usdtValue;
+                
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${formatNumber(bid.price)}</td>
+                    <td>${formatCurrency(bid.amount)}</td>
+                    <td>${formatCurrency(cumulativeBids)}</td>
+                    <td>${formatCurrency(usdtValue)}</td>
+                    <td>${formatCurrency(cumulativeUSDTBids)}</td>
+                `;
+                bidsBody.appendChild(row);
+            });
+            
+            let cumulativeAsks = 0;
+            let cumulativeUSDTAsks = 0;
+            data.asks.forEach(ask => {
+                cumulativeAsks += parseFloat(ask.amount);
+                const usdtValue = calculateUSDTValue(parseFloat(ask.price), parseFloat(ask.amount));
+                cumulativeUSDTAsks += usdtValue;
+                
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${formatNumber(ask.price)}</td>
+                    <td>${formatCurrency(ask.amount)}</td>
+                    <td>${formatCurrency(cumulativeAsks)}</td>
+                    <td>${formatCurrency(usdtValue)}</td>
+                    <td>${formatCurrency(cumulativeUSDTAsks)}</td>
+                `;
+                asksBody.appendChild(row);
+            });
+            
+            document.getElementById('bidsLoading').style.display = 'none';
+            document.getElementById('asksLoading').style.display = 'none';
+            document.getElementById('bidsTable').style.display = 'table';
+            document.getElementById('asksTable').style.display = 'table';
+            
+            updateSummaryStats(data.bids, data.asks);
+            updateTimestamp();
+        }
+
+        async function fetchOrderBook() {
+            try {
+                const response = await fetch(PAIRS[currentPair].orderBookApiUrl);
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                const data = await response.json();
+                renderOrderBook(data);
+            } catch (error) {
+                console.error('Error fetching order book:', error);
+                showError(`Failed to fetch order book data for ${currentPair}: ${error.message}`);
+            }
+        }
+
+        async function fetchCoinGeckoPrice() {
+            try {
+                const response = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=xdb-chain&vs_currencies=usd&x_cg_demo_api_key=${COINGECKO_API_KEY}`);
+                const data = await response.json();
+
+                if (data && data['xdb-chain'] && data['xdb-chain'].usd) {
+                    XDB_USDT_RATE = parseFloat(data['xdb-chain'].usd);
+                    document.getElementById('xdbRate').textContent = formatNumber(XDB_USDT_RATE);
+                    document.getElementById('sourceText').textContent = 'Source: CoinGecko API';
+                    return true; 
+                } else {
+                    throw new Error("Price data not found in CoinGecko API response.");
+                }
+            } catch (error) {
+                console.error("Error fetching XDB price from CoinGecko:", error);
+                showError(`Failed to fetch XDB/USDT rate from CoinGecko: ${error.message}`);
+                return false; 
+            }
+        }
+
+        async function fetchCoinMarketCapPrice() {
+            try {
+                const response = await fetch(`https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest?id=4566&convert=USDT`, {
+                    headers: {
+                        "X-CMC_PRO_API_KEY": COINMARKETCAP_API_KEY
+                    }
+                });
+                const data = await response.json();
+
+                if (data.status.error_code !== 0) {
+                    console.error("CoinMarketCap API Error:", data.status.error_message);
+                    showError(`CoinMarketCap API Error: ${data.status.error_message}`);
+                    return false; 
+                }
+
+                const xdbData = data.data['4566'];
+                if (xdbData && xdbData.quote && xdbData.quote.USDT && xdbData.quote.USDT.price) {
+                    XDB_USDT_RATE = parseFloat(xdbData.quote.USDT.price);
+                    document.getElementById('xdbRate').textContent = formatNumber(XDB_USDT_RATE);
+                    document.getElementById('sourceText').textContent = 'Source: CoinMarketCap API';
+                    return true; 
+                } else {
+                    throw new Error("Price data not found in CoinMarketCap API response.");
+                }
+
+            } catch (error) {
+                console.error("Error fetching XDB price from CoinMarketCap:", error);
+                showError(`Failed to fetch XDB/USDT rate from CoinMarketCap: ${error.message}`);
+                return false; 
+            }
+        }
+
+        async function fetchXDBPrice() {
+            let success = await fetchCoinGeckoPrice(); 
+            if (!success) {
+                console.log("CoinGecko failed, trying CoinMarketCap...");
+                success = await fetchCoinMarketCapPrice(); 
+            }
+
+            if (!success) {
+                XDB_USDT_RATE = 0.0006913; 
+                document.getElementById('xdbRate').textContent = `${formatNumber(XDB_USDT_RATE)} (Static Fallback)`;
+                document.getElementById('sourceText').textContent = 'Source: Static Fallback';
+            }
+        }
+
+        function updateUIForPair(pairKey) {
+            const pairConfig = PAIRS[pairKey];
+            document.getElementById('mainTitle').textContent = pairConfig.mainTitle;
+            document.getElementById('subTitle').textContent = pairConfig.subTitle;
+            document.getElementById('currentTradingPair').textContent = pairConfig.tradingPair;
+            document.getElementById('bidAmountHeader').textContent = `Amount (${pairConfig.amountLabel})`;
+            document.getElementById('bidTotalHeader').textContent = `Total (${pairConfig.amountLabel})`;
+            document.getElementById('askAmountHeader').textContent = `Amount (${pairConfig.amountLabel})`;
+            document.getElementById('askTotalHeader').textContent = `Total (${pairConfig.amountLabel})`;
+
+            // Update active button state
+            document.getElementById('xdbCBPAYBtn').classList.remove('active');
+            document.getElementById('honeyXDBBtn').classList.remove('active');
+            if (pairKey === 'CBPAY/XDB') {
+                document.getElementById('xdbCBPAYBtn').classList.add('active');
+            } else if (pairKey === 'HONEY/XDB') {
+                document.getElementById('honeyXDBBtn').classList.add('active');
+            }
+        }
+
+        function switchPair(pairKey) {
+            if (currentPair === pairKey) return; // No change needed
+
+            currentPair = pairKey;
+            updateUIForPair(currentPair);
+            
+            // Clear existing intervals and re-initialize for the new pair
+            clearInterval(priceUpdateInterval);
+            clearInterval(orderBookUpdateInterval);
+            clearInterval(priceCountdownInterval);
+            clearInterval(orderBookCountdownInterval);
+            initializeApp();
+        }
+
+        async function initializeApp() {
+            await fetchXDBPrice(); 
+            fetchOrderBook();
+            updateUIForPair(currentPair); // Ensure UI is updated on init
+            
+            priceUpdateInterval = setInterval(async () => {
+                await fetchXDBPrice(); 
+                startPriceCountdown();
+            }, 300 * 1000);
+
+            orderBookUpdateInterval = setInterval(() => {
+                fetchOrderBook();
+                startOrderBookCountdown();
+            }, 10 * 1000); 
+            
+            startPriceCountdown();
+            startOrderBookCountdown();
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeApp();
+
+            document.getElementById('xdbCBPAYBtn').addEventListener('click', () => switchPair('CBPAY/XDB'));
+            document.getElementById('honeyXDBBtn').addEventListener('click', () => switchPair('HONEY/XDB'));
+        });
+        
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                clearInterval(priceUpdateInterval);
+                clearInterval(orderBookUpdateInterval);
+                clearInterval(priceCountdownInterval);
+                clearInterval(orderBookCountdownInterval);
+            } else {
+                initializeApp();
+            }
+        });
+    </script>
+</body>
+</html>
+
+
